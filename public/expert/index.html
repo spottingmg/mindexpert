@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#181818">
-  <title>MINDExpert · Live-Fahrplan</title>
+  <title>MIND · Live-Fahrplan</title>
   <style>
     :root { --ink:#181818; --paper:#f7f7f7; --rule:#e7e7e7; --muted:#a7a7a7; --red:#9d302d; --danger:#ff4e4e; --positive:#45d67b; }
     * { box-sizing:border-box; }
@@ -58,9 +58,9 @@
       <form class="search" id="train-search"><label for="train-number">Zugnummer suchen</label><input id="train-number" name="train" inputmode="numeric" autocomplete="off" placeholder="Zugnummer eingeben"><button type="submit">Anzeigen</button></form>
     </header>
     <section class="board" aria-live="polite">
-      <header class="identity"><div class="service" id="service-name">MINDExpert</div><div class="destination" id="destination">Live-Fahrplan</div><div class="live-status"><i class="dot"></i><span id="realtime-label">LIVE</span></div></header>
+      <header class="identity"><div class="service" id="service-name">MINDExpert</div><div class="destination" id="destination"></div><div class="live-status"><i class="dot"></i><span id="realtime-label">LIVE</span></div></header>
       <div class="meta"><span id="service-state">Zug auswählen</span><span>Stand <strong id="updated-time">--:--:--</strong></span></div>
-      <div id="content" class="message"><h1>Fahrplan bereit</h1><p>Gib oben eine Zugnummer ein, um die Live-Daten aus dem Roblox-Netz zu laden.</p></div>
+      <div id="content" class="message"><h1>Fahrplan bereit</h1><p>Gib oben eine Zugnummer ein, um die Live-Daten aus Roblox zu laden.</p></div>
     </section>
   </main>
   <script>
