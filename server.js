@@ -14,11 +14,26 @@
 
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
+// 1. Pfade sicher auflösen (Linux- & Render-kompatibel)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// 2. Express App initialisieren
 const app = express();
+
+// 3. Middlewares einrichten
 app.use(cors());
 app.use(express.json({ limit: "8mb" }));
-app.use("/expert", express.static(new URL("./public/expert", import.meta.url).pathname));
+
+// 4. Statische Dateien ausliefern (zeigt auf "public/expert")
+app.use("/expert", express.static(path.join(__dirname, "public", "expert")));
+
+// 5. Weiterleitung von / nach /expert/ (Verhindert "Cannot GET /" beim Aufruf der Hauptdomain)
+app.get("/", (req, res) => {
+  res.redirect("/expert/");
+});
 
 const TOKEN = process.env.ROBLOX_EXPERT_TOKEN;
 
@@ -28,9 +43,9 @@ let schedule = { trains: {}, stations: {} };
 /**
  * Live-Overlay pro Zugnummer:
  * live[trainnumber] = {
- *   route: { [stationId]: { actualArr, arrDelay, actualDep, depDelay, arrived, departed } },
- *   updatedAt: number,
- *   active: boolean   // true sobald der erste Event für diese Fahrt kam
+ *    route: { [stationId]: { actualArr, arrDelay, actualDep, depDelay, arrived, departed } },
+ *    updatedAt: number,
+ *    active: boolean   // true sobald der erste Event für diese Fahrt kam
  * }
  */
 let live = {};
