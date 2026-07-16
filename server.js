@@ -11,6 +11,11 @@
 //
 // Der Server merged beides: Soll-Zeiten kommen aus dem Snapshot, Ist-Zeiten
 // aus den Live-Events. Die Website liest nur den gemergten Zustand.
+// Nach const app = express(); und app.use(express.json());
+
+let staticTrains = {};    // Speichert den statischen Fahrplan
+let staticStations = {};  // Speichert die Haltestellennamen
+let liveTrainStates = {}; // Speichert die aktuellen Verspätungen/Echtzeit-Events
 
 import express from "express";
 import cors from "cors";
@@ -181,6 +186,93 @@ app.get("/api/roblox-expert/stream", (req, res) => {
 setInterval(() => {
   for (const res of sseClients) res.write(`event: ping\ndata: "keepalive"\n\n`);
 }, 25000);
+// Hilfsfunktion zur Umrechnung der In-Game-Minuten in HH:MM
+function minutesToHHMM(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60) % 24;
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
 
+// ENDPUNKT 1: Nimmt einmalig den Fahrplan aus Roblox entgegen
+app.post('/api/roblox-expert/snapshot', (req, res) => {
+    const { trains, stations } = req.body;
+    if (trains) staticTrains = trains;
+    if (stations) staticStations = stations;
+    console.log("Neuer Fahrplan-Snapshot erfolgreich geladen!");
+    res.sendStatus(200);
+});
+
+// ENDPUNKT 2: Nimmt Live-Updates von aktiven Zügen entgegen
+app.post('/api/roblox-expert/live-event', (req, res) => {
+    const { trainnumber, stationId, type, time, delay } = req.body;
+    
+    if (!liveTrainStates[trainnumber]) {
+        liveTrainStates[trainnumber] = {};
+    }
+    
+    liveTrainStates[trainnumber][stationId] = {
+        delay: delay,
+        actualTime: time,
+        type: type // "arrival" (Ankunft) oder "departure" (Abfahrt)
+    };
+    
+    res.sendStatus(200);
+});
+
+// ENDPUNKT 3: Setzt die Live-Daten zurück (z.B. bei Schichtende/Umlaufende)
+app.post('/api/roblox-expert/reset', (req, res) => {
+    const { trainnumber } = req.body;
+    if (liveTrainStates[trainnumber]) {
+        delete liveTrainStates[trainnumber];
+    }
+    res.sendStatus(200);
+});
+
+// ENDPUNKT 4: Abfahrten für dein Netlify-Frontend abrufen (Soll + Ist gemischt)
+app.get('/api/stations/:stationId/departures', (req, res) => {
+    const { stationId } = req.params;
+    const departures = [];
+
+    for (const [trainnumber, train] of Object.entries(staticTrains)) {
+        const stopIndex = train.route.findIndex(s => s.id === stationId);
+        if (stopIndex === -1) continue;
+
+        const stop = train.route[stopIndex];
+        if (stop.dep === undefined || stop.dep === null) continue; // Endstation ignorieren
+
+        const plannedMinutes = train.start + stop.dep;
+        const plannedTimeStr = minutesToHHMM(plannedMinutes);
+
+        const liveData = liveTrainStates[trainnumber]?.[stationId];
+        let delay = 0;
+        let isLive = false;
+        let actualTimeStr = plannedTimeStr;
+
+        if (liveData) {
+            delay = liveData.delay;
+            isLive = true;
+            actualTimeStr = minutesToHHMM(plannedMinutes + delay);
+        }
+
+        const lastStop = train.route[train.route.length - 1];
+        const destinationName = staticStations[lastStop.id]?.name || "Unbekanntes Ziel";
+
+        departures.push({
+            trainnumber: trainnumber,
+            line: train.line,
+            type: train.type,
+            track: stop.bst || stop.plan || "1",
+            plannedTime: plannedTimeStr,
+            actualTime: actualTimeStr,
+            delay: delay,
+            isLive: isLive,
+            destination: destinationName,
+            plannedMinutes: plannedMinutes
+        });
+    }
+
+    departures.sort((a, b) => a.plannedMinutes - b.plannedMinutes);
+    res.json(departures);
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`MINDExpert läuft auf Port ${PORT}`));
