@@ -274,5 +274,62 @@ app.get('/api/stations/:stationId/departures', (req, res) => {
     departures.sort((a, b) => a.plannedMinutes - b.plannedMinutes);
     res.json(departures);
 });
+
+// ENDPUNKT: Einzelnen Zuglauf für die Detailansicht abrufen
+app.get('/api/roblox-expert/trains/:trainnumber', (req, res) => {
+    const { trainnumber } = req.params;
+
+    // Sicherheits-Check: Falls der Server nach einem Neustart noch keinen Snapshot hat
+    if (Object.keys(staticTrains).length === 0) {
+        return res.status(404).json({ error: "Fahrplan auf dem Server noch nicht geladen. Bitte starte das Roblox-Spiel einmal." });
+    }
+
+    // Zug im statischen Fahrplan suchen (als String oder Zahl)
+    const train = staticTrains[trainnumber] || staticTrains[Number(trainnumber)];
+
+    if (!train) {
+        return res.status(404).json({ error: "Zug nicht gefunden" });
+    }
+
+    // Wir bauen den kompletten Zuglauf (alle Haltestellen) inklusive Live-Daten zusammen
+    const fullRoute = train.route.map(stop => {
+        const plannedMinutes = train.start + (stop.dep || stop.arr || 0);
+        const plannedTimeStr = minutesToHHMM(plannedMinutes);
+
+        // Prüfen, ob wir Live-Daten für diesen Halt dieses Zuges haben
+        const liveData = liveTrainStates[trainnumber]?.[stop.id] || liveTrainStates[Number(trainnumber)]?.[stop.id];
+        
+        let delay = 0;
+        let isLive = false;
+        let actualTimeStr = plannedTimeStr;
+
+        if (liveData) {
+            delay = liveData.delay;
+            isLive = true;
+            actualTimeStr = minutesToHHMM(plannedMinutes + delay);
+        }
+
+        return {
+            stationId: stop.id,
+            stationName: staticStations[stop.id]?.name || "Unbekannte Station",
+            plannedArrival: stop.arr !== undefined ? minutesToHHMM(train.start + stop.arr) : null,
+            plannedDeparture: stop.dep !== undefined ? minutesToHHMM(train.start + stop.dep) : null,
+            actualArrival: stop.arr !== undefined ? minutesToHHMM(train.start + stop.arr + delay) : null,
+            actualDeparture: stop.dep !== undefined ? minutesToHHMM(train.start + stop.dep + delay) : null,
+            delay: delay,
+            isLive: isLive,
+            track: stop.bst || stop.plan || "1"
+        };
+    });
+
+    // Rückgabe des formatierten Zuges für deine bahn.expert-Detailansicht
+    res.json({
+        trainnumber: trainnumber,
+        line: train.line,
+        type: train.type,
+        route: fullRoute
+    });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`MINDExpert läuft auf Port ${PORT}`));
