@@ -530,9 +530,9 @@
         }
         setMessage('Lade Zugdaten', 'Der aktuelle Laufweg wird abgerufen.');
         try {
-          const response = await fetch(`/api/roblox-expert/trains/${encodeURIComponent(trainNumber)}`, {
-            headers: { Accept: 'application/json' }
-          });
+const response = await fetch(`https://mindexpert.onrender.com/api/roblox-expert/trains/${encodeURIComponent(trainNumber)}`, {
+  headers: { Accept: 'application/json' }
+});
           if (!response.ok) {
             throw new Error(response.status === 404 ? 'Dieser Zug wurde nicht gefunden.' : 'Die Zugdaten sind derzeit nicht verfügbar.');
           }
@@ -547,7 +547,7 @@
 
       function connectStream() {
         if (!('EventSource' in window)) return;
-        source = new EventSource('/api/roblox-expert/stream');
+source = new EventSource('https://mindexpert.onrender.com/api/roblox-expert/stream');
         source.onopen = () => setConnection('live', 'Live verbunden');
         source.onerror = () => setConnection('error', 'Live-Verbindung wird wiederhergestellt');
         source.onmessage = event => {
