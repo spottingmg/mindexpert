@@ -20,8 +20,8 @@ const app = express();
 app.use(cors());
 app.use("/expert", express.static(join(__dirname, "public/expert")));
 
-const trains = JSON.parse(readFileSync(join(__dirname, "data/trains.json"), "utf-8"));
-const stations = JSON.parse(readFileSync(join(__dirname, "data/stations.json"), "utf-8"));
+const trains = JSON.parse(readFileSync(join(__dirname, "/trains.json"), "utf-8"));
+const stations = JSON.parse(readFileSync(join(__dirname, "/stations.json"), "utf-8"));
 
 console.log(`MINDExpert-Datenbank geladen: ${Object.keys(trains).length} Züge, ${Object.keys(stations).length} Stationen`);
 
