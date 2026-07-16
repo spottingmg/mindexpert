@@ -1,38 +1,39 @@
-# Roblox → MINDExpert-Webseite
+# MINDExpert — aktueller Stand
 
-Die Website unter `https://mindexpert.onrender.com/expert/` bekommt ihre Daten
-aus zwei getrennten Quellen, die der Server zusammenführt:
+Die Website unter `https://mindexpert.onrender.com/expert/` ist aktuell eine
+reine **Soll-Fahrplan-Anzeige**. Es gibt keine Verbindung zu Roblox mehr —
+`data/trains.json` und `data/stations.json` sind die komplette "Datenbank",
+1:1 aus den Roblox-ModuleScripts `trains` und `stations` nach JSON
+konvertiert. Der Server liest diese beim Start einmal ein.
 
-| Quelle | Was | Wie oft |
-|---|---|---|
-| `MINDExpertBridge.server.lua` | Soll-Fahrplan (`trains` + `stations`) | alle 60s (ändert sich nur bei Fahrplan-Edits) |
-| `MINDExpertLiveEvents.server.lua` | Ist-Daten: ein Event pro "Angekommen"/"Abgefahren" | genau dann, wenn es im Spiel passiert |
+Die Echtzeit-Anbindung (Ist-Zeiten aus dem laufenden Spiel, "Angekommen" /
+"Abgefahren") kommt später als eigener Schritt dazu.
 
-Die Website liest nur `GET /api/roblox-expert/trains/:nummer` — die Merge-Logik
-läuft komplett im Node-Server.
+## Struktur
+
+```
+mindexpert/
+├── server.js              Liest data/*.json, liefert /api/roblox-expert/trains/:nummer
+├── package.json
+├── data/
+│   ├── trains.json         Soll-Fahrplan pro Zugnummer (aus trains-ModuleScript)
+│   └── stations.json       Stationsnamen/Gleise (aus stations-ModuleScript)
+└── public/expert/
+    └── index.html          Frontend
+```
 
 ## Deployment (Render)
 
-1. `server.js`, `package.json` und `public/expert/index.html` in dein Repo legen.
-2. In Render eine lange, zufällige Umgebungsvariable `ROBLOX_EXPERT_TOKEN` setzen.
-3. Start-Command: `npm install && npm start`.
-4. Website danach unter `/expert/?train=18024` erreichbar.
+1. Als **Language: Node** anlegen (kein Docker).
+2. Build Command: `npm install`
+3. Start Command: `npm start`
+4. Nach dem Deploy erreichbar unter `/expert/?train=18024`.
 
-## Roblox
+## Fahrplan aktualisieren
 
-1. In **Game Settings → Security** "Allow HTTP Requests" aktivieren.
-2. `MINDExpertBridge.server.lua` nach `ServerScriptService` kopieren, `TOKEN`
-   auf denselben Wert wie `ROBLOX_EXPERT_TOKEN` setzen, Pfad zu eurem
-   RIS-Handler-Modul prüfen (aktuell `ReplicatedStorage["os.library"].PlayerOnTrainMovement["RIS-Handler"]`).
-3. `MINDExpertLiveEvents.server.lua` ebenfalls nach `ServerScriptService`
-   kopieren, TOKEN setzen und **die drei markierten Stellen an eure Objekte
-   anpassen**:
-   - Pfad zum `Trains`-Ordner mit den Zugsets (aktuell `workspace.Trains`)
-   - die Namen der FIS-Values (`Zugnummer`, `StationIndex`, `stationReached`)
-   - falls ihr ein eigenes "Abgefahren"-Signal habt (statt des
-     StationIndex-Fallbacks), den Hook dafür austauschen
-   - die Quelle der In-Game-Uhrzeit in `gameClockMinutes()` (aktuell
-     `Lighting:GetMinutesAfterMidnight()`)
-
-Beide Scripts sind absichtlich token-geschützt; ohne den korrekten Header
-nimmt der Server keine Daten an.
+Wenn sich der Fahrplan in Roblox ändert, exportierst du `trains.lua` /
+`stations.lua` neu und konvertierst sie erneut nach JSON (z.B. mit dem
+gleichen Lua→JSON-Parser), dann `data/trains.json` / `data/stations.json`
+im Repo ersetzen und neu deployen. Sobald die Echtzeit-Anbindung
+dazukommt, übernimmt ein neuer Server-Endpunkt das automatisch aus dem
+laufenden Spiel.
