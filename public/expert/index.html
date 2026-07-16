@@ -6,247 +6,584 @@
   <meta name="theme-color" content="#181818">
   <title>MIND · Live-Fahrplan</title>
   <style>
-   /* Grunddesign der Seite */
-body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-}
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1c1c1e;
+      --border-color: #2c2c2e;
+      --text-main: #ffffff;
+      --text-muted: #9a9a9f;
+      --brand-red: #852323;
+      --green-live: #30d158;
+      --red-delay: #ff453a;
+    }
 
-/* 1. Roter Header (Bild 1 & 2) */
-.train-header {
-    background-color: #852323; /* Dunkelrot */
-    padding: 12px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 18px;
-    font-weight: bold;
-}
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
 
-.train-header .train-title {
-    font-weight: 800;
-}
+    .app {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-.train-header .train-destination {
-    font-weight: 600;
-}
+    /* 1. Chrome (Suche & Verbindungsstatus) */
+    .chrome {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-/* 2. Liste der Stationen */
-.station-list {
-    display: flex;
-    flex-direction: column;
-}
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
 
-/* Einzelne Tabellenzeile */
-.station-row {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #252525; /* Sehr dünner, dunkler Trenner */
-}
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    .dot.live {
+      background-color: var(--green-live);
+      box-shadow: 0 0 8px var(--green-live);
+    }
+    .dot.error {
+      background-color: var(--red-delay);
+      box-shadow: 0 0 8px var(--red-delay);
+    }
+    .dot.orange {
+      background-color: #ff9f0a;
+      box-shadow: 0 0 8px #ff9f0a;
+    }
 
-/* Linke Spalte: Zeiten (Festbreite, damit alles perfekt untereinander steht) */
-.time-col {
-    width: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    font-variant-numeric: tabular-nums; /* Verhindert das Wackeln bei Zahlen */
-}
-/* Einzelne Zeitzeile (Ankunft oder Abfahrt) */
-.time-line {
-    display: flex;
-    gap: 8px;
-    height: 18px;
-    align-items: center;
-}
-.time-line .planned {
-    color: #ffffff;
-    font-size: 15px;
-    font-weight: 400;
-}
-/* Echtzeit-Klassen */
-.time-line .actual {
-    font-size: 15px;
-}
-/* Unpünktlich (Rot) & Pünktlich (Grün) */
-.time-line .actual.delay-red {
-    color: #ff453a; /* Klares, helles Rot auf dunklem Grund */
-}
-.time-line .actual.delay-green {
-    color: #30d158; /* Sattes, helles Grün */
-}
-/* FETT (Angekommen/Abgefahren) */
-.time-line .actual.status-actual {
-    font-weight: 800;
-}
-/* DÜNN (Prognose) */
-.time-line .actual.status-prognosis {
-    font-weight: 300;
-    opacity: 0.9;
-}
-/* Mittlere Spalte: Stationsname */
-.station-name {
-    flex-grow: 1;
-    font-size: 16px;
-    color: #ffffff;
-    font-weight: 400;
-}
-/* Rechte Spalte: Gleis */
-.track-col {
-    width: 50px;
-    text-align: right;
-    font-size: 16px;
-    color: #ffffff;
-    font-weight: 400;
-}
+    .search {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .search label {
+      display: none; /* Screenreader-freundlich aber visuell ausgeblendet */
+    }
+    .search input {
+      flex-grow: 1;
+      background-color: #2c2c2e;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 10px 14px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search input:focus {
+      border-color: var(--brand-red);
+    }
+    .search button {
+      background-color: var(--brand-red);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .search button:hover {
+      opacity: 0.9;
+    }
+
+    /* 2. Board Container (Das Anzeigeband) */
+    .board {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Roter Header im bahn.expert / DB-Stil */
+    .identity {
+      background-color: var(--brand-red);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .identity .service {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .identity .destination {
+      font-size: 16px;
+      font-weight: 600;
+      margin-left: auto;
+      margin-right: 16px;
+      text-align: right;
+    }
+    .identity .live-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .identity .live-status .dot {
+      width: 6px;
+      height: 6px;
+    }
+
+    /* Meta-Bar unter dem roten Band */
+    .meta {
+      background-color: #242426;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .meta strong {
+      color: var(--text-main);
+    }
+
+    /* 3. Stations-Liste & Reihen */
+    .station-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .station-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.15s;
+    }
+    .station-row:last-child {
+      border-bottom: none;
+    }
+    .station-row:hover {
+      background-color: #242426;
+    }
+
+    /* Linke Spalte: Zeiten */
+    .time-col {
+      width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .time-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 18px;
+    }
+    .time-line .planned {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 400;
+      width: 38px;
+    }
+    .time-line .actual {
+      font-size: 14px;
+    }
+    .time-line .actual.color-green {
+      color: var(--green-live);
+    }
+    .time-line .actual.color-red {
+      color: var(--red-delay);
+    }
+    .time-line .actual.state-actual {
+      font-weight: 800;
+    }
+    .time-line .actual.state-prognosis {
+      font-weight: 300;
+      opacity: 0.8;
+    }
+
+    /* Visuelle Timeline-Verbindung (Mittellinie mit Knoten) */
+    .timeline-col {
+      width: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      align-self: stretch;
+      position: relative;
+      margin-right: 8px;
+    }
+    .timeline-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #48484a;
+    }
+    .station-row:first-child .timeline-line {
+      top: 50%;
+    }
+    .station-row:last-child .timeline-line {
+      bottom: 50%;
+    }
+    .timeline-node {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #8e8e93;
+      z-index: 1;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+    /* Wenn der Zug aktuell an diesem Bahnhof steht */
+    .station-row.active-station .timeline-node {
+      background-color: var(--green-live);
+      box-shadow: 0 0 6px var(--green-live);
+    }
+
+    /* Stationsname */
+    .station-name {
+      flex-grow: 1;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-main);
+      padding-right: 12px;
+    }
+    .station-name .code {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    /* Gleis-Spalte */
+    .track-col {
+      width: 60px;
+      text-align: right;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .track-col .planned-track {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+    .track-col .track-actual {
+      color: var(--red-delay);
+      font-weight: bold;
+      margin-left: 2px;
+    }
+
+    /* Systemmeldungen (Start, Fehler, Laden) */
+    .message {
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .message h1 {
+      font-size: 20px;
+      margin: 0 0 8px 0;
+      font-weight: 700;
+    }
+    .message p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .message.error h1 {
+      color: var(--red-delay);
+    }
+    .message button {
+      margin-top: 16px;
+      background-color: #2c2c2e;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .message button:hover {
+      background-color: #3a3a3c;
+    }
   </style>
 </head>
 <body>
   <main class="app">
+    <!-- 1. Header (Suche & Verbindungsstatus) -->
     <header class="chrome">
-      <div class="connection" aria-live="polite"><i class="dot" id="connection-dot"></i><span id="connection-label">Verbindung wird hergestellt</span></div>
-      <form class="search" id="train-search"><label for="train-number">Zugnummer suchen</label><input id="train-number" name="train" inputmode="numeric" autocomplete="off" placeholder="Zugnummer eingeben"><button type="submit">Anzeigen</button></form>
+      <div class="connection" aria-live="polite">
+        <i class="dot" id="connection-dot"></i>
+        <span id="connection-label">Verbindung wird hergestellt</span>
+      </div>
+      <form class="search" id="train-search">
+        <label for="train-number">Zugnummer suchen</label>
+        <input id="train-number" name="train" inputmode="numeric" autocomplete="off" placeholder="Zugnummer eingeben">
+        <button type="submit">Anzeigen</button>
+      </form>
     </header>
+
+    <!-- 2. Der eigentliche Live-Fahrplan -->
     <section class="board" aria-live="polite">
-      <header class="identity"><div class="service" id="service-name">MINDExpert</div><div class="destination" id="destination"></div><div class="live-status"><i class="dot"></i><span id="realtime-label">LIVE</span></div></header>
-      <div class="meta"><span id="service-state">Zug auswählen</span><span>Stand <strong id="updated-time">--:--:--</strong></span></div>
-      <div id="content" class="message"><h1>Fahrplan bereit</h1><p>Gib oben eine Zugnummer ein, um die Live-Daten aus Roblox zu laden.</p></div>
+      <header class="identity">
+        <div class="service" id="service-name">MINDExpert</div>
+        <div class="destination" id="destination"></div>
+        <div class="live-status">
+          <i class="dot live"></i>
+          <span id="realtime-label">LIVE</span>
+        </div>
+      </header>
+      <div class="meta">
+        <span id="service-state">Zug auswählen</span>
+        <span>Stand <strong id="updated-time">--:--:--</strong></span>
+      </div>
+      <!-- In diesem Container wird alles dynamisch gerendert (Systemmeldungen ODER die Stations-Liste) -->
+      <div id="content" class="message">
+        <h1>Fahrplan bereit</h1>
+        <p>Gib oben eine Zugnummer ein, um die Live-Daten aus Roblox zu laden.</p>
+      </div>
     </section>
   </main>
+
   <script>
     (() => {
       const $ = id => document.getElementById(id);
-      const input = $('train-number'), content = $('content'), service = $('service-name'), destination = $('destination'), state = $('service-state'), stamp = $('updated-time'), dot = $('connection-dot'), connection = $('connection-label');
-      let trainNumber = new URLSearchParams(location.search).get('train') || '', source, refreshTimer;
+      const input = $('train-number'), 
+            content = $('content'), 
+            service = $('service-name'), 
+            destination = $('destination'), 
+            state = $('service-state'), 
+            stamp = $('updated-time'), 
+            dot = $('connection-dot'), 
+            connection = $('connection-label');
+            
+      let trainNumber = new URLSearchParams(location.search).get('train') || '', 
+          source, 
+          refreshTimer;
+          
       input.value = trainNumber;
 
-      const setConnection = (kind, label) => { dot.className = `dot ${kind}`; connection.textContent = label; };
-      const setMessage = (title, text, isError = false) => { content.className = `message${isError ? ' error' : ''}`; content.replaceChildren(); const h = document.createElement('h1'); h.textContent = title; const p = document.createElement('p'); p.textContent = text; content.append(h,p); if (isError && trainNumber) { const b=document.createElement('button'); b.textContent='Erneut versuchen'; b.onclick=load; content.append(b); } };
-
-      // Soll-Zeit steht immer als "HH:MM" (Minuten) im Fahrplan-Snapshot, die
-      // Ist-Zeit kommt ebenfalls als "HH:MM"-String direkt von Roblox.
-      const sollTime = minutes => {
-        if (minutes == null) return null;
-        const h = Math.floor(minutes / 60) % 24, m = minutes % 60;
-        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const setConnection = (kind, label) => { 
+        dot.className = `dot ${kind}`; 
+        connection.textContent = label; 
       };
 
-      function timeLine(sollMinutes, istString, delay, happened) {
-        const soll = sollTime(sollMinutes);
-        if (soll == null && !istString) return null;
-        const line = document.createElement('div');
-        line.className = 'line';
-        if (soll != null) {
-          const s = document.createElement('span'); s.className = 'soll'; s.textContent = soll; line.append(s);
-        }
-        const ist = document.createElement('span');
-        ist.className = 'ist';
-        if (happened && istString) {
-          ist.textContent = istString + (typeof delay === 'number' && delay !== 0 ? ` (${delay > 0 ? '+' : ''}${delay})` : '');
-          ist.classList.add(typeof delay === 'number' && Math.abs(delay) >= 3 ? 'bad' : 'good');
+      const setMessage = (title, text, isError = false) => { 
+        content.className = `message${isError ? ' error' : ''}`; 
+        content.replaceChildren(); 
+        
+        const h = document.createElement('h1'); 
+        h.textContent = title; 
+        
+        const p = document.createElement('p'); 
+        p.textContent = text; 
+        
+        content.append(h, p); 
+
+        // Bei Fehlern oder Infotexten setzen wir die Header-Meta-Daten zurück
+        service.textContent = "MINDExpert";
+        destination.textContent = "";
+        state.textContent = "Zug auswählen";
+
+        if (isError && trainNumber) { 
+          const b = document.createElement('button'); 
+          b.textContent = 'Erneut versuchen'; 
+          b.onclick = load; 
+          content.append(b); 
+        } 
+      };
+
+      // Baut eine einzelne Zeile (Ankunft oder Abfahrt) innerhalb der Zeitspalte
+      function buildTimeRow(timeObj) {
+        if (!timeObj) return '';
+        
+        let actualSpan = '';
+        if (timeObj.actual) {
+          const colorClass = `color-${timeObj.color}`;
+          const stateClass = timeObj.isPrognosis ? 'state-prognosis' : 'state-actual';
+          
+          // Verspätung formatieren (z. B. "+3" oder "-1")
+          const delayText = timeObj.delay > 0 ? ` (+${timeObj.delay})` : (timeObj.delay < 0 ? ` (${timeObj.delay})` : '');
+          actualSpan = `<span class="actual ${colorClass} ${stateClass}">${timeObj.actual}${delayText}</span>`;
         } else {
-          ist.textContent = '—';
-          ist.classList.add('pending');
+          actualSpan = `<span class="actual state-prognosis">—</span>`;
         }
-        line.append(ist);
-        return line;
+
+        return `
+          <div class="time-line">
+            <span class="planned">${timeObj.planned}</span>
+            ${actualSpan}
+          </div>
+        `;
       }
 
-      function cell(text, className='') { const td=document.createElement('td'); td.className=className; td.textContent=text; return td; }
+      function render(data) {
+        // 1. Metadaten des Zugs aktualisieren
+        const label = `${data.type || ''}${data.line || ''}` || `Zug ${trainNumber}`;
+        service.textContent = `${label}${data.trainnumber ? ` (${data.trainnumber})` : ''}`;
+        destination.textContent = data.destination || 'Fahrplan';
+        state.textContent = data.isActive ? 'Fahrt läuft' : 'Noch nicht gestartet';
+        
+        const updateDate = data.updatedAt ? new Date(data.updatedAt) : new Date();
+        stamp.textContent = new Intl.DateTimeFormat('de-DE', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }).format(updateDate);
 
-      function render(payload) {
-        const train=payload.train || {}, stations=payload.stations || {}, route=Array.isArray(train.route) ? train.route : [];
-        const label=`${train.type || ''}${train.line || ''}` || `Zug ${trainNumber}`;
-        service.textContent=`${label}${train.trainnumber ? ` (${train.trainnumber})` : ''}`;
-        const last=route[route.length-1], finalStation=last && stations[String(last.id)]; destination.textContent=finalStation ? `${finalStation.displayName}${finalStation.rilCode ? ` [${finalStation.rilCode}]` : ''}` : 'Fahrplan';
-        state.textContent = train.active ? 'Fahrt läuft' : (train.displayed === false ? 'Nicht angezeigt' : 'Noch nicht gestartet');
-        stamp.textContent=new Intl.DateTimeFormat('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(payload.updatedAt ? new Date(payload.updatedAt) : new Date());
+        // 2. Stations-Liste aufbauen
+        const listContainer = document.createElement('div');
+        listContainer.className = 'station-list';
 
-        const table=document.createElement('table'); table.className='table';
-        const caption=document.createElement('caption'); caption.textContent=`Fahrplan für ${service.textContent}`; table.append(caption);
-        const head=document.createElement('thead'), headRow=document.createElement('tr');
-        [['Halt','stop'],['Soll / Ist','time'],['Gleis','platform']].forEach(([label,className]) => { const th=document.createElement('th'); th.className=className; th.textContent=label; headRow.append(th); });
-        head.append(headRow); table.append(head);
-
-        const body=document.createElement('tbody');
+        const route = Array.isArray(data.route) ? data.route : [];
         route.forEach(stop => {
-          const station=stations[String(stop.id)] || {};
-          const row=document.createElement('tr');
+          const row = document.createElement('div');
+          row.className = 'station-row';
 
-          const name=document.createElement('td'); name.className='station';
-          name.append(document.createTextNode(station.displayName || `Station ${stop.id}`));
-          if (station.rilCode) { const code=document.createElement('span'); code.className='code'; code.textContent=` [${station.rilCode}]`; name.append(code); }
-          row.append(name);
-
-          const timeCell=document.createElement('td'); timeCell.className='time';
-          const arrLine = stop.arr != null ? timeLine(stop.arr, stop.actualArr, stop.arrDelay, stop.arrived) : null;
-          const depLine = stop.dep != null ? timeLine(stop.dep, stop.actualDep, stop.depDelay, stop.departed) : null;
-          if (arrLine) timeCell.append(arrLine);
-          if (depLine) timeCell.append(depLine);
-          if (!arrLine && !depLine) timeCell.textContent = '—';
-          row.append(timeCell);
-
-          const platform=cell(stop.bst ?? '—','platform');
-          if (stop.plan && String(stop.plan) !== String(stop.bst)) {
-            platform.classList.add('changed');
-            platform.textContent=`${stop.bst} `;
-            const plan=document.createElement('span'); plan.className='planned'; plan.textContent=`(${stop.plan})`; platform.append(plan);
+          // Wenn der Zug an der Station steht (Angekommen, aber noch nicht abgefahren)
+          const arrLive = stop.arrival && stop.arrival.isLive && !stop.arrival.isPrognosis;
+          const depLive = stop.departure && stop.departure.isLive && !stop.departure.isPrognosis;
+          if (arrLive && !depLive) {
+            row.classList.add('active-station');
           }
-          row.append(platform);
 
-          body.append(row);
+          // Linke Spalte: Zeiten
+          const timeCol = document.createElement('div');
+          timeCol.className = 'time-col';
+          
+          let timeColHTML = '';
+          if (stop.arrival) timeColHTML += buildTimeRow(stop.arrival);
+          if (stop.departure) timeColHTML += buildTimeRow(stop.departure);
+          if (!stop.arrival && !stop.departure) timeColHTML = '—';
+          
+          timeCol.innerHTML = timeColHTML;
+          row.append(timeCol);
+
+          // Mittlere Spalte 1: Visuelle Timeline-Verbindung
+          const timelineCol = document.createElement('div');
+          timelineCol.className = 'timeline-col';
+          
+          const timelineLine = document.createElement('div');
+          timelineLine.className = 'timeline-line';
+          
+          const timelineNode = document.createElement('div');
+          timelineNode.className = 'timeline-node';
+          
+          timelineCol.append(timelineLine, timelineNode);
+          row.append(timelineCol);
+
+          // Mittlere Spalte 2: Stationsname (+ optionaler Ril-Code)
+          const nameCol = document.createElement('div');
+          nameCol.className = 'station-name';
+          nameCol.textContent = stop.stationName || `Station ${stop.stationId}`;
+          row.append(nameCol);
+
+          // Rechte Spalte: Gleis-Informationen (Gleisänderungen abfangen)
+          const trackCol = document.createElement('div');
+          trackCol.className = 'track-col';
+          
+          let trackHTML = `<span class="planned-track">${stop.plannedTrack || '—'}</span>`;
+          if (stop.actualTrack && String(stop.actualTrack) !== String(stop.plannedTrack)) {
+            trackHTML = `<span class="planned-track">${stop.actualTrack}</span> <span class="track-actual">(${stop.plannedTrack})</span>`;
+          }
+          trackCol.innerHTML = trackHTML;
+          row.append(trackCol);
+
+          listContainer.append(row);
         });
-        table.append(body); content.className=''; content.replaceChildren(table);
+
+        // Content leeren und die generierte Liste einfügen
+        content.className = '';
+        content.replaceChildren(listContainer);
       }
 
       async function load() {
-        if (!trainNumber) { setMessage('Fahrplan bereit','Gib oben eine Zugnummer ein, um die Live-Daten aus dem Roblox-Netz zu laden.'); return; }
-        setMessage('Lade Zugdaten','Der aktuelle Laufweg wird abgerufen.');
+        if (!trainNumber) { 
+          setMessage('Fahrplan bereit', 'Gib oben eine Zugnummer ein, um die Live-Daten aus dem Roblox-Netz zu laden.'); 
+          return; 
+        }
+        setMessage('Lade Zugdaten', 'Der aktuelle Laufweg wird abgerufen.');
         try {
-          const response=await fetch(`/api/roblox-expert/trains/${encodeURIComponent(trainNumber)}`,{headers:{Accept:'application/json'}});
-          if (!response.ok) throw new Error(response.status === 404 ? 'Dieser Zug wurde nicht gefunden.' : 'Die Zugdaten sind derzeit nicht verfügbar.');
-          const data=await response.json();
+          const response = await fetch(`/api/roblox-expert/trains/${encodeURIComponent(trainNumber)}`, {
+            headers: { Accept: 'application/json' }
+          });
+          if (!response.ok) {
+            throw new Error(response.status === 404 ? 'Dieser Zug wurde nicht gefunden.' : 'Die Zugdaten sind derzeit nicht verfügbar.');
+          }
+          const data = await response.json();
           render(data);
-          setConnection('live','Live verbunden');
+          setConnection('live', 'Live verbunden');
         } catch(error) {
-          setConnection('error','Verbindung unterbrochen');
-          setMessage('Fahrplan nicht verfügbar',error.message || 'Bitte versuche es erneut.',true);
+          setConnection('error', 'Verbindung unterbrochen');
+          setMessage('Fahrplan nicht verfügbar', error.message || 'Bitte versuche es erneut.', true);
         }
       }
 
       function connectStream() {
         if (!('EventSource' in window)) return;
-        source=new EventSource('/api/roblox-expert/stream');
-        source.onopen=()=>setConnection('live','Live verbunden');
-        source.onerror=()=>setConnection('error','Live-Verbindung wird wiederhergestellt');
-        source.onmessage=event=>{
+        source = new EventSource('/api/roblox-expert/stream');
+        source.onopen = () => setConnection('live', 'Live verbunden');
+        source.onerror = () => setConnection('error', 'Live-Verbindung wird wiederhergestellt');
+        source.onmessage = event => {
           try {
-            const data=JSON.parse(event.data);
-            const changed=String(data.trainNumber || data.trainnumber || data.id || '');
-            if (!changed || changed === trainNumber) { clearTimeout(refreshTimer); refreshTimer=setTimeout(load,150); }
-          } catch { if (trainNumber) load(); }
+            const data = JSON.parse(event.data);
+            const changed = String(data.trainNumber || data.trainnumber || data.id || '');
+            if (!changed || changed === trainNumber) { 
+              clearTimeout(refreshTimer); 
+              refreshTimer = setTimeout(load, 150); 
+            }
+          } catch { 
+            if (trainNumber) load(); 
+          }
         };
       }
 
-      $('train-search').addEventListener('submit', event => { event.preventDefault(); const next=input.value.trim(); if (!next) return; trainNumber=next; const url=new URL(location.href); url.searchParams.set('train',trainNumber); history.pushState({},'',url); load(); });
-      window.addEventListener('popstate',()=>{ trainNumber=new URLSearchParams(location.search).get('train') || ''; input.value=trainNumber; load(); });
-      connectStream(); if (trainNumber) load();
+      $('train-search').addEventListener('submit', event => { 
+        event.preventDefault(); 
+        const next = input.value.trim(); 
+        if (!next) return; 
+        trainNumber = next; 
+        const url = new URL(location.href); 
+        url.searchParams.set('train', trainNumber); 
+        history.pushState({}, '', url); 
+        load(); 
+      });
+
+      window.addEventListener('popstate', () => { 
+        trainNumber = new URLSearchParams(location.search).get('train') || ''; 
+        input.value = trainNumber; 
+        load(); 
+      });
+
+      connectStream(); 
+      if (trainNumber) load();
     })();
   </script>
-  <div class="train-detail-card">
-    <!-- Header-Bereich -->
-    <div class="train-header" id="header-container">
-        <div class="train-title">Lade...</div>
-        <div class="train-destination"></div>
-    </div>
-    <!-- Stationsliste -->
-    <div class="station-list" id="stations-container">
-        <!-- Wird dynamisch befüllt -->
-    </div>
-</div>
 </body>
 </html>
