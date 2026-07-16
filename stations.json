@@ -1,0 +1,255 @@
+{
+  "10001": {
+    "id": "10001",
+    "displayName": "Altdorf am See",
+    "trainDest": "Altdorf am See",
+    "rilCode": "ALTD",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": [
+          "A",
+          "B",
+          "C"
+        ]
+      },
+      {
+        "track": "2",
+        "plat": "2",
+        "areas": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
+      },
+      {
+        "track": "3",
+        "plat": "2",
+        "areas": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
+      }
+    ],
+    "information": ""
+  },
+  "10002": {
+    "id": "10002",
+    "displayName": "Steinfels Sonneneck",
+    "trainDest": "Steinfels Sonneneck",
+    "rilCode": "STFS",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      },
+      {
+        "track": "2",
+        "plat": "2",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10003": {
+    "id": "10003",
+    "displayName": "Steinfels Hbf",
+    "trainDest": "Steinfels Hbf",
+    "rilCode": "STF",
+    "platforms": [
+      {
+        "track": "11",
+        "plat": "1",
+        "areas": [
+          "A",
+          "B"
+        ]
+      },
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ]
+      },
+      {
+        "track": "2",
+        "plat": "2",
+        "areas": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ]
+      },
+      {
+        "track": "3",
+        "plat": "2",
+        "areas": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ]
+      }
+    ],
+    "information": ""
+  },
+  "10004": {
+    "id": "10004",
+    "displayName": "Steinfels Nord",
+    "trainDest": "Steinfels Nord",
+    "rilCode": "STFN",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "",
+        "areas": {}
+      },
+      {
+        "track": "2",
+        "plat": "2",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10005": {
+    "id": "10005",
+    "displayName": "Hohenfeld (b. Steinfels)",
+    "trainDest": "Hohenfeld",
+    "rilCode": "SHF",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10006": {
+    "id": "10006",
+    "displayName": "Marienheide",
+    "trainDest": "Marienheide",
+    "rilCode": "SMH",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10007": {
+    "id": "10007",
+    "displayName": "Vehlitz",
+    "trainDest": "Vehlitz",
+    "rilCode": "SVL",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      },
+      {
+        "track": "2",
+        "plat": "2",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10008": {
+    "id": "10008",
+    "displayName": "Steinau",
+    "trainDest": "Steinau",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10009": {
+    "id": "10009",
+    "displayName": "Rheineck",
+    "trainDest": "Rheineck",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      },
+      {
+        "track": "2",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10010": {
+    "id": "10010",
+    "displayName": "Eimbeckhausen",
+    "trainDest": "Eimbeckhausen",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10011": {
+    "id": "10011",
+    "displayName": "Mueden",
+    "trainDest": "Mueden",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  },
+  "10012": {
+    "id": "10012",
+    "displayName": "Plochingen",
+    "trainDest": "Plochingen",
+    "platforms": [
+      {
+        "track": "1",
+        "plat": "1",
+        "areas": {}
+      },
+      {
+        "track": "2",
+        "plat": "1",
+        "areas": {}
+      },
+      {
+        "track": "3",
+        "plat": "2",
+        "areas": {}
+      }
+    ],
+    "information": ""
+  }
+}
