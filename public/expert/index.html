@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#181818">
+  <title>MINDExpert · Live-Fahrplan</title>
+  <style>
+    :root { --ink:#181818; --paper:#f7f7f7; --rule:#e7e7e7; --muted:#a7a7a7; --red:#9d302d; --danger:#ff4e4e; --positive:#45d67b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; min-height:100vh; background:var(--ink); color:var(--paper); font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif; }
+    button,input { font:inherit; }
+    .app { min-height:100vh; padding:12px max(16px, calc((100vw - 1440px) / 2)); }
+    .chrome { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:38px; margin:0 0 10px; color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    .connection { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+    .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); box-shadow:0 0 0 3px rgba(167,167,167,.12); }
+    .dot.live { background:var(--positive); box-shadow:0 0 0 3px rgba(69,214,123,.12); animation:pulse 1.55s ease-in-out infinite; }
+    .dot.error { background:var(--danger); }
+    .search { display:flex; align-items:center; border-bottom:1px solid #777; min-width:min(100%,310px); }
+    .search label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .search input { width:100%; appearance:none; border:0; outline:0; background:transparent; color:var(--paper); padding:8px 0; font-weight:700; letter-spacing:.06em; }
+    .search input::placeholder { color:#777; }
+    .search button { border:0; border-left:1px solid #777; background:transparent; color:var(--paper); cursor:pointer; padding:7px 0 7px 12px; font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+    .search button:hover,.search button:focus-visible { color:var(--positive); outline:none; }
+    .board { border-top:1px solid #303030; }
+    .identity { background:var(--red); min-height:78px; display:grid; grid-template-columns:minmax(150px, 27%) 1fr auto; align-items:center; gap:24px; padding:16px 18px; border-radius:8px 8px 0 0; }
+    .service { font-size:25px; line-height:1; font-weight:800; letter-spacing:.03em; }
+    .destination { font-size:23px; line-height:1.1; font-weight:400; }
+    .live-status { justify-self:end; display:flex; align-items:center; gap:7px; color:#ffeceb; font-size:11px; letter-spacing:.09em; text-transform:uppercase; }
+    .live-status .dot { width:7px; height:7px; background:#ffeceb; box-shadow:none; }
+    .meta { min-height:43px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 14px; border-bottom:2px solid var(--rule); color:var(--muted); font-size:12px; letter-spacing:.05em; text-transform:uppercase; }
+    .meta strong { color:var(--paper); font-weight:700; }
+    .table { width:100%; border-collapse:collapse; table-layout:fixed; }
+    .table caption { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .table thead { color:var(--muted); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+    .table th { padding:10px 14px 8px; text-align:left; font-weight:400; border-bottom:1px solid #777; }
+    .table th.time,.table th.platform,.table td.time,.table td.platform { text-align:right; }
+    .table th.stop { width:50%; }.table th.time { width:16%; }.table th.platform { width:10%; }
+    .table tbody tr { border-bottom:1px solid var(--rule); transition:background .14s ease; }
+    .table tbody tr:hover { background:#222; }
+    .table td { padding:17px 14px 16px; vertical-align:middle; font-size:24px; line-height:1.1; }
+    .station { font-weight:400; }.code { color:var(--muted); font-size:.68em; white-space:nowrap; }
+    .time { font-variant-numeric:tabular-nums; white-space:nowrap; }.time strong { font-weight:800; }
+    .delay { margin-left:6px; font-size:13px; font-weight:700; vertical-align:middle; }.delay.good { color:var(--positive); }.delay.bad { color:var(--danger); }
+    .platform { font-variant-numeric:tabular-nums; }.platform.changed { color:var(--danger); font-weight:800; }.planned { color:var(--muted); font-size:14px; font-weight:400; }
+    .muted { color:var(--muted); }.state { color:var(--muted); font-size:12px; letter-spacing:.05em; text-transform:uppercase; }
+    .message { min-height:300px; display:grid; place-content:center; text-align:center; padding:40px 20px; border-bottom:1px solid var(--rule); }
+    .message h1 { margin:0 0 9px; color:var(--paper); font-size:25px; font-weight:400; }.message p { max-width:480px; margin:0; color:var(--muted); line-height:1.5; }
+    .message.error h1 { color:var(--danger); }.message button { justify-self:center; margin-top:21px; padding:9px 13px; background:transparent; border:1px solid var(--paper); color:var(--paper); cursor:pointer; text-transform:uppercase; letter-spacing:.08em; font-size:11px; }.message button:hover,.message button:focus-visible { background:var(--paper); color:var(--ink); outline:none; }
+    @keyframes pulse { 50% { opacity:.38; transform:scale(.74); } }
+    @media (max-width:650px) { .app { padding:0; }.chrome { padding:10px 14px; gap:10px; }.connection span:last-child { display:none; }.search { min-width:200px; }.identity { min-height:94px; grid-template-columns:1fr auto; gap:8px 12px; padding:15px 14px; border-radius:0; }.service { font-size:22px; }.destination { grid-column:1 / -1; font-size:20px; }.live-status { grid-column:2; grid-row:1; }.meta { padding:0 14px; font-size:10px; }.meta span:first-child { display:none; }.table thead { display:none; }.table,.table tbody,.table tr,.table td { display:block; width:100%; }.table tbody tr { display:grid; grid-template-columns:1fr 1fr; padding:0 14px 12px; }.table td { padding:11px 0 0; font-size:20px; }.table td.station { grid-column:1 / -1; font-size:22px; padding-top:15px; }.table td.time { text-align:left; }.table td.platform { text-align:right; }.table td.time::before,.table td.platform::before { display:block; margin-bottom:2px; color:var(--muted); font-size:10px; letter-spacing:.09em; text-transform:uppercase; }.table td.arrival::before { content:"Ankunft"; }.table td.departure::before { content:"Abfahrt"; }.table td.platform::before { content:"Gleis"; }.table td.empty { color:#5e5e5e; }.message { min-height:260px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="chrome">
+      <div class="connection" aria-live="polite"><i class="dot" id="connection-dot"></i><span id="connection-label">Verbindung wird hergestellt</span></div>
+      <form class="search" id="train-search"><label for="train-number">Zugnummer suchen</label><input id="train-number" name="train" inputmode="numeric" autocomplete="off" placeholder="Zugnummer eingeben"><button type="submit">Anzeigen</button></form>
+    </header>
+    <section class="board" aria-live="polite">
+      <header class="identity"><div class="service" id="service-name">MINDExpert</div><div class="destination" id="destination">Live-Fahrplan</div><div class="live-status"><i class="dot"></i><span id="realtime-label">LIVE</span></div></header>
+      <div class="meta"><span id="service-state">Zug auswählen</span><span>Stand <strong id="updated-time">--:--:--</strong></span></div>
+      <div id="content" class="message"><h1>Fahrplan bereit</h1><p>Gib oben eine Zugnummer ein, um die Live-Daten aus dem Roblox-Netz zu laden.</p></div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const input = $('train-number'), content = $('content'), service = $('service-name'), destination = $('destination'), state = $('service-state'), stamp = $('updated-time'), dot = $('connection-dot'), connection = $('connection-label');
+      let trainNumber = new URLSearchParams(location.search).get('train') || '', source, refreshTimer;
+      input.value = trainNumber;
+      const time = value => value == null || value === '' ? '—' : String(value).slice(0,5);
+      const delayValue = value => typeof value === 'number' ? value : Number(value || 0);
+      const formatDelay = value => { const n = delayValue(value); if (!n) return null; return `${n > 0 ? '+' : ''}${n}`; };
+      const setConnection = (kind, label) => { dot.className = `dot ${kind}`; connection.textContent = label; };
+      const setMessage = (title, text, isError = false) => { content.className = `message${isError ? ' error' : ''}`; content.replaceChildren(); const h = document.createElement('h1'); h.textContent = title; const p = document.createElement('p'); p.textContent = text; content.append(h,p); if (isError && trainNumber) { const b=document.createElement('button'); b.textContent='Erneut versuchen'; b.onclick=load; content.append(b); } };
+      function cell(text, className='') { const td=document.createElement('td'); td.className=className; td.textContent=text; return td; }
+      function timeCell(planned, actual, delay, kind) { const td = document.createElement('td'); td.className=`time ${kind}`; if (planned == null && actual == null) { td.classList.add('empty'); td.textContent='—'; return td; } const main=document.createElement('strong'); main.textContent=time(actual ?? planned); td.append(main); const delta=formatDelay(delay); if (delta) { const d=document.createElement('span'); d.className=`delay ${Math.abs(delayValue(delay)) >= 5 ? 'bad' : 'good'}`; d.textContent=delta; td.append(d); } return td; }
+      function render(payload) {
+        const train=payload.train || {}, stations=payload.stations || {}, route=Array.isArray(train.route) ? train.route : [];
+        const label=`${train.type || ''}${train.line || ''}` || `Zug ${trainNumber}`;
+        service.textContent=`${label}${train.trainnumber ? ` (${train.trainnumber})` : ''}`;
+        const last=route[route.length-1], finalStation=last && stations[String(last.id)]; destination.textContent=finalStation ? `${finalStation.displayName}${finalStation.rilCode ? ` [${finalStation.rilCode}]` : ''}` : 'Fahrplan';
+        state.textContent=train.state || (train.displayed === false ? 'Nicht angezeigt' : 'Fahrplan aktiv');
+        stamp.textContent=new Intl.DateTimeFormat('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(payload.updatedAt ? new Date(payload.updatedAt) : new Date());
+        const table=document.createElement('table'); table.className='table'; const caption=document.createElement('caption'); caption.textContent=`Fahrplan für ${service.textContent}`; table.append(caption);
+        const head=document.createElement('thead'), headRow=document.createElement('tr'); [['Halt','stop'],['Ankunft','time'],['Abfahrt','time'],['Gleis','platform']].forEach(([label,className]) => { const th=document.createElement('th'); th.className=className; th.textContent=label; headRow.append(th); }); head.append(headRow); table.append(head);
+        const body=document.createElement('tbody');
+        route.forEach(stop => { const station=stations[String(stop.id)] || {}; const row=document.createElement('tr'); const name=document.createElement('td'); name.className='station'; name.append(document.createTextNode(station.displayName || `Station ${stop.id}`)); if (station.rilCode) { const code=document.createElement('span'); code.className='code'; code.textContent=` [${station.rilCode}]`; name.append(code); } row.append(name); row.append(timeCell(stop.arr, null, stop.arrDelay, 'arrival')); row.append(timeCell(stop.dep, stop.actualDep, stop.depDelay, 'departure')); const platform=cell(stop.bst ?? '—','platform'); if (stop.plan && String(stop.plan) !== String(stop.bst)) { platform.classList.add('changed'); platform.textContent=`${stop.bst} `; const plan=document.createElement('span'); plan.className='planned'; plan.textContent=`(${stop.plan})`; platform.append(plan); } row.append(platform); body.append(row); });
+        table.append(body); content.className=''; content.replaceChildren(table);
+      }
+      async function load() { if (!trainNumber) { setMessage('Fahrplan bereit','Gib oben eine Zugnummer ein, um die Live-Daten aus dem Roblox-Netz zu laden.'); return; } setMessage('Lade Zugdaten','Der aktuelle Laufweg wird abgerufen.'); try { const response=await fetch(`/api/roblox-expert/trains/${encodeURIComponent(trainNumber)}`,{headers:{Accept:'application/json'}}); if (!response.ok) throw new Error(response.status === 404 ? 'Dieser Zug wurde nicht gefunden.' : 'Die Zugdaten sind derzeit nicht verfügbar.'); const data=await response.json(); render(data); setConnection('live','Live verbunden'); } catch(error) { setConnection('error','Verbindung unterbrochen'); setMessage('Fahrplan nicht verfügbar',error.message || 'Bitte versuche es erneut.',true); } }
+      function connectStream() { if (!('EventSource' in window)) return; source=new EventSource('/api/roblox-expert/stream'); source.onopen=()=>setConnection('live','Live verbunden'); source.onerror=()=>setConnection('error','Live-Verbindung wird wiederhergestellt'); source.onmessage=event=>{ try { const data=JSON.parse(event.data); const changed=String(data.trainNumber || data.trainnumber || data.id || ''); if (!changed || changed === trainNumber) { clearTimeout(refreshTimer); refreshTimer=setTimeout(load,150); } } catch { if (trainNumber) load(); } }; }
+      $('train-search').addEventListener('submit', event => { event.preventDefault(); const next=input.value.trim(); if (!next) return; trainNumber=next; const url=new URL(location.href); url.searchParams.set('train',trainNumber); history.pushState({},'',url); load(); });
+      window.addEventListener('popstate',()=>{ trainNumber=new URLSearchParams(location.search).get('train') || ''; input.value=trainNumber; load(); });
+      connectStream(); if (trainNumber) load();
+    })();
+  </script>
+</body>
+</html>
